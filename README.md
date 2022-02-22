@@ -64,17 +64,17 @@ The following folder structure:
 │   ├── prod
 │   │   └── projects
 │   │       └── project-1
-│   │           ├── gcs
+│   │           ├── bucket
 │   │           └── pubsub
 │   ├── qa
 │   │   └── projects
 │   │       └── project-1
-│   │           ├── gcs
+│   │           ├── bucket
 │   │           └── pubsub
 │   ├── stage
 │   │   └── projects
 │   │       └── project-1
-│   │           ├── gcs
+│   │           ├── bucket
 │   │           └── pubsub
 ```
 
@@ -84,9 +84,9 @@ The configuration for these pieces of infrastructure is almost identical, *only 
 
 Example for bucket names:
 
-- `stage-project-1-bucket`
-- `qa-project-1-bucket`
-- `prod-project-1-bucket` 
+- `stage-project-1-assets`
+- `qa-project-1-assets`
+- `prod-project-1-assets` 
 
 Same logic applies for Pub/Sub configuration.
 
@@ -103,7 +103,7 @@ I might have a lot of configuration for each environment, and I don't want to re
 │   ├── _commonenv
 │   │   └── projects
 │   │       └── project-1
-│   │           ├── gcs
+│   │           ├── bucket
 │   │           │   └── terragrunt.hcl
 │   │           └── pubsub
 │   │               └── terragrunt.hcl
@@ -111,7 +111,7 @@ I might have a lot of configuration for each environment, and I don't want to re
 │   │   ├── env.hcl
 │   │   └── projects
 │   │       └── project-1
-│   │           ├── gcs
+│   │           ├── bucket
 │   │           │   └── terragrunt.hcl
 │   │           └── pubsub
 │   │               └── terragrunt.hcl
@@ -119,7 +119,7 @@ I might have a lot of configuration for each environment, and I don't want to re
 │   │   ├── env.hcl
 │   │   └── projects
 │   │       └── project-1
-│   │           ├── gcs
+│   │           ├── bucket
 │   │           │   └── terragrunt.hcl
 │   │           └── pubsub
 │   │               └── terragrunt.hcl
@@ -127,7 +127,7 @@ I might have a lot of configuration for each environment, and I don't want to re
 │   │   ├── env.hcl
 │   │   └── projects
 │   │       └── project-1
-│   │           ├── gcs
+│   │           ├── bucket
 │   │           │   └── terragrunt.hcl
 │   │           └── pubsub
 │   │               └── terragrunt.hcl
@@ -155,7 +155,7 @@ Same logic applies for `qa` and `prod`.
 - Write the desired configuration in the terragrunt.hcl files within the `_commonenv` folder:
 
 ```hcl
-# live/_commonenv/projects/project-1/gcs/terragrunt.hcl
+# live/_commonenv/projects/project-1/bucket/terragrunt.hcl
 
 locals {
   env_config = read_terragrunt_config(find_in_parent_folders("env.hcl")
@@ -183,28 +183,28 @@ The configuration is only written once in the `_commonenv` folder.
 Then, in the environments folders, this configuration must be included:
 
 ```hcl
-# live/stage/projects/project-1/gcs/terragrunt.hcl
+# live/stage/projects/project-1/bucket/terragrunt.hcl
 
 include "root" {
   path = find_in_parents_folders()
 }
 
-include "gcs" {
-  path = "${get_path_to_repo_root()}/live/_commonenv/projects/project-1/gcs/terragrunt.hcl"
+include "bucket-config" {
+  path = "${get_path_to_repo_root()}/live/_commonenv/projects/project-1/bucket/terragrunt.hcl"
 }
 ```
 
 Same structure for `qa` and `prod`:
 
 ```hcl
-# live/qa/projects/project-1/gcs/terragrunt.hcl
+# live/qa/projects/project-1/bucket/terragrunt.hcl
 
 include "root" {
   path = find_in_parents_folders()
 }
 
-include "gcs" {
-  path = "${get_path_to_repo_root()}/live/_commonenv/projects/project-1/gcs/terragrunt.hcl"
+include "bucket-config" {
+  path = "${get_path_to_repo_root()}/live/_commonenv/projects/project-1/bucket/terragrunt.hcl"
 }
 ```
 
@@ -214,13 +214,16 @@ This configuration avoid repeating the `terraform` and `inputs` block for the th
 
 Ok, this configuration is DRY but is it [KISS](https://en.wikipedia.org/wiki/KISS_principle)?
 
-Well, maybe not so much. Let's recap what it does:
-- A "gcs" root module includes the configuration defined in `_commonenv/projects/project-1/gcs/terragrunt.hcl`
-- The `_commonenv/projects/project-1/gcs/terragrunt.hcl` reads a configuration from `live/ENV/env.hcl` (with ENV in `stage`, `qa` and `prod`),
-  to use its `locals` block to set the name of the bucket.
+Well, maybe not so much.
 
-So, repeating this simple bucket configuration 3 times - at the root module level - could have been more readable and easy to understand.
+Let's recap what it does:
 
-But, for more complex use cases (VPC, Pub/Sub etc.), including common configurations can save hundreds (thousands?) of lines of code!
+- A "bucket" root module includes a common configuration defined in `_commonenv/projects/project-1/bucket/terragrunt.hcl`
+- The `_commonenv/projects/project-1/bucket/terragrunt.hcl` reads a configuration from `live/ENV/env.hcl` (with ENV in `stage`, `qa` and `prod`),
+  to get its `locals` block that contain the environment name used to prefix the name of the bucket.
+
+So, repeating this simple bucket configuration 3 times - at the root module level - would probably have been more readable and easy to understand.
+
+But, for more complex use cases (VPC, Pub/Sub etc.), including common configurations can save hundreds of lines of code!
 I think it is worth the add of complexity.
 
