@@ -1,5 +1,5 @@
 locals {
-  env = "prod"
+  env        = "prod"
   project_id = "my-project-${local.env}"
 }
 

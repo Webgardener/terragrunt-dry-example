@@ -1,5 +1,5 @@
 locals {
-  env = "qa"
+  env        = "qa"
   project_id = "my-project-${local.env}"
 }
 
