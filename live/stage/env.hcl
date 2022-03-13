@@ -1,6 +1,6 @@
 locals {
   env = "stage"
-  project_id = "my-project-${local.env}"
+  project_id = "sustained-racer-325114"
 }
 
 inputs = {

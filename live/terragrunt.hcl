@@ -1,10 +1,10 @@
-
 remote_state {
   backend = "gcs"
 
   config = {
-    bucket = "backend-terraform"
+    bucket = "twe-terraform-backend"
     prefix = "terraform/${path_relative_to_include()}"
+skip_bucket_creation = true
   }
 }
 
