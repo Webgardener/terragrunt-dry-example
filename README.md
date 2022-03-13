@@ -199,7 +199,7 @@ Then, in the environments folders, this configuration must be included:
 # live/stage/apps/app-1/bucket/terragrunt.hcl
 
 include "root" {
-  path = find_in_parents_folders()
+  path = find_in_parent_folders()
 }
 
 include "common" {
@@ -213,7 +213,7 @@ Same structure for `qa` and `prod`:
 # live/qa/apps/app-1/bucket/terragrunt.hcl
 
 include "root" {
-  path = find_in_parents_folders()
+  path = find_in_parent_folders()
 }
 
 include "bucket-config" {
@@ -284,6 +284,10 @@ The "app name" part of the the bucket name can be passed as a variable:
 ```hcl
 # live/_commonenv/apps/bucket/terragrunt.hcl
 
+locals {
+  [..]
+  app_name = "${basename(dirname(get_original_terragrunt_dir()))}" # will be equal to "app-1"
+}
 [..]
 inputs = merge(
   local.env_config.inputs,
@@ -299,8 +303,3 @@ inputs = merge(
 
 > Note how the `apps/app-1/bucket/terragrunt.hcl` file becomes `apps/bucket/terragrunt.hcl`
 > The bucket configuration is now common to all apps!
-
-
-
-
-
